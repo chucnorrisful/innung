@@ -15,6 +15,18 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/test', function () {
+    return view('test');
+});
+
+Route::get('/clock', function () {
+    return view('clock');
+});
+
+Route::get('/clock2', function () {
+    return view('p5test');
+});
+
 Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
