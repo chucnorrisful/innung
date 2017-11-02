@@ -27,6 +27,10 @@ Route::get('/clock2', function () {
     return view('p5test');
 });
 
+Route::get('/uhr', function () {
+    return view('uhr');
+});
+
 Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
