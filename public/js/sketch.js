@@ -1,27 +1,96 @@
 function setup() {
 
     var viewPort = viewport();
+    scale = 1;
+    oldScale = 1;
+    diffScale = 0;
 
-    if (checkMob()) {
+    if (viewPort.width < viewPort.height) {
         scale = viewPort.width / 1200;
     } else {
         scale = viewPort.height / 1200;
     }
     var canvas = createCanvas(1000 * scale, 1000 * scale);
+    oldScale = scale;
     canvas.parent('sketch-holder');
 
     angleMode(DEGREES);
 
     angle = 0;
     oldAngle = 0;
+    angleHistory = [];
     mouseStartX = 0;
     mouseStartY = 0;
     mouseEndX = 0;
     mouseEndY = 0;
     offS = 0;
+
+    //localStorage['angleHistory'] = JSON.stringify(angleHistory);
+
+    angHistString = localStorage.getItem('angleHistory');
+
+    if(angHistString !== null) {
+        angleHistory = JSON.parse(angHistString);
+        print("lol");
+    } else {
+        pushOrUpdateAngleHistory(angleHistory);
+        print("xD");
+    }
+
+    newest = getNewestAngleHistory(angleHistory);
+
+    if(newest === null) print("Fatal newest empty during setup!");
+
+    //print(angleHistory[newest]);
+    oldAngle = newest.angle;
+
 }
 
-var scale = 1;
+//null if empty array, false if update, true if pushing new
+function pushOrUpdateAngleHistory(angHist) {
+
+    today = {date: new Date(), angle: oldAngle};
+
+    lenArr = angHist.length;
+
+    for(i = 0; i<lenArr; i++) {
+
+        dateInLoop = new Date(angHist[i].date);
+
+        if(dateInLoop.getFullYear() === today.date.getFullYear()) {
+            angHist[i] = today;
+            print("update to"+oldAngle);
+            return true;
+        }
+    }
+
+    angHist.push(today);
+    return false;
+
+}
+
+function getNewestAngleHistory(angHist) {
+
+    lenArr = angHist.length;
+
+    if(lenArr === 0) return null;
+
+    newest = angHist[0];
+
+    for(i = 1; i<lenArr; i++) {
+        if(newest.date < angHist[i].date) {
+            newest = angHist[i];
+        }
+    }
+
+    return newest;
+}
+
+var scale;
+var oldScale;
+var diffScale;
+
+var angleHistory;
 
 var mouseStartX;
 var mouseStartY;
@@ -32,21 +101,27 @@ var oldAngle;
 var angle;
 
 function draw() {
+
     clear();
 
     translate(500 * scale, 500 * scale);
     rotate(-90);
 
     var viewPort = viewport();
-    scale = viewPort.height / 1200;
-
-    if (checkMob()) {
+    if(viewPort.height < viewPort.width) {
+        scale = viewPort.height / 1200;
+    }else {
         scale = viewPort.width / 1200;
+    }
+
+    if(scale !== oldScale) {
+        diffScale += scale-oldScale;
+        oldScale = scale;
     }
 
     drawSleepCycle(2, 0, 0, 7);
 
-    drawBeerCycle();
+    //drawBeerCycle();
 
     drawBase();
 
@@ -64,10 +139,6 @@ function checkMob() {
     })(navigator.userAgent || navigator.vendor || window.opera);
     return check;
 };
-
-function windowResized() {
-    resizeCanvas(1000 * scale, 1000 * scale);
-}
 
 function viewport() {
     var e = window
@@ -91,21 +162,17 @@ function mousePressed() {
 function mouseReleased() {
     oldAngle += angle;
     angle = 0;
+    pushOrUpdateAngleHistory(angleHistory)
+    localStorage['angleHistory'] = JSON.stringify(angleHistory);
+
+    if(scale === oldScale && diffScale !== 0) {
+        resizeCanvas(1000 * scale, 1000 * scale);
+        diffScale = 0;
+    }
 }
 
 function calcAngle(mX, mY) {
-
-    var distance = Math.sqrt(mX * mX + mY * mY);
-    var angleXY = Math.acos(mY / distance) * 180 / Math.PI;
-
-    if (mouseEndX > 0) {
-        angleXY = 180 - angleXY;
-    } else {
-        angleXY = 180 + angleXY;
-    }
-
-    return angleXY;
-
+    return Math.atan2(mY, mX) * 180 / Math.PI;
 }
 
 function drawSleepCycle(sHR, sMN, sSC, duration) {
@@ -119,12 +186,9 @@ function drawSleepCycle(sHR, sMN, sSC, duration) {
         var angle2 = calcAngle(mouseEndX, mouseEndY);
 
         angle = angle2 - angle1;
-
-        print([angle, angle1, angle2]);
     }
 
-    offS = angle + oldAngle; //????
-    //print([dist, oldDist]);
+    offS = angle + oldAngle;
 
     var daysecStart = (sHR * 3600) + (sMN * 60) + sSC;
     var daysecEnd = daysecStart + duration * 3600;

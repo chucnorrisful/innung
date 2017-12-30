@@ -107,18 +107,7 @@ function mouseReleased() {
 }
 
 function calcAngle(mX, mY) {
-
-    var distance = Math.sqrt(mX * mX + mY * mY);
-    var angleXY = Math.acos(mY / distance) * 180 / Math.PI;
-
-    if (mouseEndX > 0) {
-        angleXY = 180 - angleXY;
-    } else {
-        angleXY = 180 + angleXY;
-    }
-
-    return angleXY;
-
+    return Math.atan2(mY, mX) * 180 / Math.PI;
 }
 
 function drawSleepCycle(sHR, sMN, sSC, duration) {
@@ -133,11 +122,9 @@ function drawSleepCycle(sHR, sMN, sSC, duration) {
 
         angle = angle2 - angle1;
 
-        print([angle, angle1, angle2]);
     }
 
-    offS = angle + oldAngle; //????
-    //print([dist, oldDist]);
+    offS = angle + oldAngle;
 
     var daysecStart = (sHR * 3600) + (sMN * 60) + sSC;
     var daysecEnd = daysecStart + duration * 3600;
