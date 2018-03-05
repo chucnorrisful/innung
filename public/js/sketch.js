@@ -25,23 +25,18 @@ function setup() {
     mouseEndY = 0;
     offS = 0;
 
-    //localStorage['angleHistory'] = JSON.stringify(angleHistory);
-
     angHistString = localStorage.getItem('angleHistory');
 
     if(angHistString !== null) {
         angleHistory = JSON.parse(angHistString);
-        print("lol");
     } else {
         pushOrUpdateAngleHistory(angleHistory);
-        print("xD");
     }
 
     newest = getNewestAngleHistory(angleHistory);
 
     if(newest === null) print("Fatal newest empty during setup!");
 
-    //print(angleHistory[newest]);
     oldAngle = newest.angle;
 
 }
@@ -58,9 +53,13 @@ function pushOrUpdateAngleHistory(angHist) {
         dateInLoop = new Date(angHist[i].date);
 
         if(dateInLoop.getFullYear() === today.date.getFullYear()) {
-            angHist[i] = today;
-            print("update to"+oldAngle);
-            return true;
+            if(dateInLoop.getMonth() === today.date.getMonth()) {
+                if(dateInLoop.getDate() === today.date.getDate()) {
+                    angHist[i] = today;
+                    //print("update to"+oldAngle);
+                    return true;
+                }
+            }
         }
     }
 
@@ -119,7 +118,14 @@ function draw() {
         oldScale = scale;
     }
 
-    drawSleepCycle(2, 0, 0, 7);
+    drawSleepCycle(2, 0, 0, 7, 0);
+
+    lOld = angleHistory.length;
+    if(lOld > 7) lOld = 7;
+
+    for (i = lOld - 2; i >= 0; i--) {
+        drawOldSleepCycle(2, 0, 0, 7, angleHistory[i].angle, lOld - 1 - i)
+    }
 
     //drawBeerCycle();
 
@@ -178,6 +184,8 @@ function calcAngle(mX, mY) {
 function drawSleepCycle(sHR, sMN, sSC, duration) {
     push();
 
+    twoRadiusCycle =  870 * scale;
+
     if (mouseIsPressed) {
         mouseEndX = mouseX - 500 * scale;
         mouseEndY = mouseY - 500 * scale;
@@ -199,7 +207,28 @@ function drawSleepCycle(sHR, sMN, sSC, duration) {
     noFill();
     stroke(255, 0, 0);
     strokeWeight(4);
-    arc(0, 0, 870 * scale, 870 * scale, startAngle + offS, endAngle + offS);
+    arc(0, 0, twoRadiusCycle, twoRadiusCycle, startAngle + offS, endAngle + offS);
+
+    pop();
+}
+
+function drawOldSleepCycle(sHR, sMN, sSC, duration, ang, level) {
+    push();
+
+    twoRadiusCycle =  870 * scale + level * 20 * scale;
+
+    var daysecStart = (sHR * 3600) + (sMN * 60) + sSC;
+    var daysecEnd = daysecStart + duration * 3600;
+
+    var startAngle = map(daysecStart, 0, 86400, 0, 360.0);
+    var endAngle = map(daysecEnd, 0, 86400, 0, 360.0);
+
+    noFill();
+
+    stroke(150 - level*15, 0, 0);
+
+    strokeWeight(4*scale);
+    arc(0, 0, twoRadiusCycle, twoRadiusCycle, startAngle + ang, endAngle + ang);
 
     pop();
 }
